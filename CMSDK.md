@@ -128,6 +128,22 @@ windows下子linux
 
 ### iii.M3开发实例
 
+#### a.cmsdk_ahb_busmatrix
+
+#### b.cmsdk_ahb_to_sram
+
+#### c.cmsdk_fpga_sram
+
+#### d.cmsdk_ahb_to_apb
+
+#### e.cmsdk_ahb_to_ahb_sync
+
+#### f.cmsdk_ahb_default_slave
+
+#### g.cmsdk_ahb_master_mux
+
+#### h.cmsdk_ahb_slave_mux
+
 ### iiii.软件开发
 
 #### a.软件驱动
@@ -150,4 +166,17 @@ windows下子linux
 
 #### b.软件移植流程
 
-1. 
+1. CortexM3.h 定义你的struct
+   1. 有哪些驱动寄存器
+   2. 寄存器的控制信息
+   3. 外设基础地址
+   4. 外设的结构体声明 链接 结构体和基地址
+2. driver.h结构体放入,函数声明
+3. driver.c 具体实现功能的函数可以移植sdk
+4. system.c 系统时钟常数,时钟中断,函数初始化,初始化屏幕
+5. start.c 启动代码 所有软件机器码的第一个是在keil设置的
+
+#### c.开发外设
+
+1. GPIO 处理器直接控制外设,如LCD(映射IO)
+2. 指令型的,用状态机去控制buffer送数据,CPU可以去干别的事(帧缓存)
