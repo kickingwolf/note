@@ -130,19 +130,68 @@ windows下子linux
 
 #### a.cmsdk_ahb_busmatrix
 
+1. 连接关系: core master -> matrix slaveport -> matrix masterport -> device salve
+2. 定义:
+   1. 矩阵的连接关系
+   2. 决定存储的参数
+      1. 稀疏,紧密
+      2. 仲裁逻辑
+         1. fixed 严格固定优先级,会打断brust传输
+         2. brust 固定优先级,不会打断brust传输
+         3. run   循环仲裁,上次传了下次优先级就低了
+      3. ==...==
+3. 实现:
+   1. 进入cmsdk中xml文件夹
+   2. example是arm提供的模板,pl是perl脚本-help运行可以看到xml使用方法
+   3. global definitions
+   4. 根据core master 设定矩阵的slaveinterface,有几个写几段
+      1. slaveinterface的名字
+      2. 该slaveinterface连接的所有的masterinterface的名字
+      3. masterinterface分配对应的地址
+         1. address_region:物理地址
+         2. remap_region:  物理地址重映射,可以通过外部IO控制REMAP参数去控制硬件映射方式
+   5. 定义device slave 的masterinterface的名字
+   6. 完成makefile文件,在readme里面有说明
+   7. 获得代码
+4. 注意事项:
+   1. 矩阵会在第一次仲裁时,会有一个延迟
+   2. 矩阵在之后的传输,后面的路径都是组合路径,如果多个矩阵链接可能导致一条很长的路径,==FPGA的长路径会经过较多的MUX逻辑,这使得延迟可能会爆炸==;==ASIC的话长路径也会带来的电容,但应该可以在后端插入反相器链条,可能影响不会那么大==,既对FPGA而言布线长度比逻辑深度更重要,ASIC相反
+
 #### b.cmsdk_ahb_to_sram
 
 #### c.cmsdk_fpga_sram
 
+魔改sram,可以直接改成系统函数读文件,这个是能综合的
+
 #### d.cmsdk_ahb_to_apb
 
+1. 只截取HADDR低16bit
+2. APB只支持32bit传输
+3. cmsdk_apb_slave_mux
+   1. DECODE使用PADDR高4bit译码
+   2. 生产16个选通信号
+   3. 用低12位控制每个外设(000-fff)
+   4. 绝对地址还是32位的
+
 #### e.cmsdk_ahb_to_ahb_sync
+
+1. 目的:解决总线矩阵组合逻辑通路问题,在多级矩阵中打断AHB的长组合逻辑,内部有寄存器会全部打拍
+2. 问题:延迟会变长啊,核心搬数据可能要6个cycle
+3. 解决方法:
+   1. 使用DMA去完成大数据的搬运(buffer+状态机)
+   2. 存储器放在高级的总线上
 
 #### f.cmsdk_ahb_default_slave
 
 #### g.cmsdk_ahb_master_mux
 
+1. 多个master合并,在M3的权威指南上有说明
+I-code 和 D-code 两个总线结构由master_mux合并,就不用去写矩阵了(现在矩阵也脚本化了,这个可能会比较少用)
+
 #### h.cmsdk_ahb_slave_mux
+
+1. 麻烦点,传统的ahb,ahb_lite控制多从机的方式
+2. 相比矩阵不会有延迟了
 
 ### iiii.软件开发
 
