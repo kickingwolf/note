@@ -20,7 +20,25 @@
 ### i.for Soc/Asic
 
 1. MCU M0,M3 没有授权费的
+   配套参考模块:
+   1. bus系统
+   2. 电源管理
+   3. 存储控制
+   4. 缓存
+   5. debug
+   6. TRNG & RTC
+   7. 扩展接口
+   8. ...
 2. linux A5
+   配套参考模块:
+   1. 超低功耗(相比其他A系列)
+   2. 中断控制
+   3. cache
+   4. nic-400
+   5. debug
+   6. 各种外设
+   7. 存储控制
+   8. ...
 3. 物理IP,自造要求高
    1. 基本Cell
    2. 基本库
@@ -29,21 +47,20 @@ ARM将其分为了两个版本
 获取网站  
 designstart.arm.com
 
-注意,可以参加ARM的研讨会
+==可以参加ARM的研讨会==
 
 #### 评估版 Eval
 
-不用签订任何合同,除了商业化一切的创新型工作都行
+1. 不用签订任何合同,除了商业化一切的创新型工作都行
+2. 与真实的RTL代码差别,可读性变差,看不出逻辑,文件名也无意义
+3. 参数无法配置
 
 #### 商业版 pro
 
 当评估完成后,采用流片前需要将其转为商业版
 
-#### 配套参考模块
-
-1. 总线
-2. 电源管理
-3. 外设
+1. 完整的代码
+2. 需要营业执照,要签合同
 
 #### 简单流程
 
@@ -130,19 +147,21 @@ windows下子linux
 
 #### a.cmsdk_ahb_busmatrix
 
-1. 连接关系: core master -> matrix slaveport -> matrix masterport -> device salve
+目的是改变移植性不强的mult连接的一组总线,取而代之的是多组lite总线,接受数据后,在内部进行数据传送.这样可以将复杂的问题化作多个数据流问题,可以脚本化==我猜的==
+
+1. 连接关系: core master -> matrix slaveport(input stage) ->Decoder-> matrix masterport(output stage) -> device salve
 2. 定义:
    1. 矩阵的连接关系
    2. 决定存储的参数
       1. 稀疏,紧密
       2. 仲裁逻辑
-         1. fixed 严格固定优先级,会打断brust传输
-         2. brust 固定优先级,不会打断brust传输
-         3. run   循环仲裁,上次传了下次优先级就低了
+         1. fixed burst严格固定优先级,会打断brust传输
+         2. fixed  固定优先级,不会打断brust传输
+         3. round-robin   循环仲裁,上次传了下次优先级就低了
       3. ==...==
 3. 实现:
    1. 进入cmsdk中xml文件夹
-   2. example是arm提供的模板,pl是perl脚本-help运行可以看到xml使用方法
+   2. example是arm提供的模板,pl是perl配置脚本-help运行可以看到xml使用方法
    3. global definitions
    4. 根据core master 设定矩阵的slaveinterface,有几个写几段
       1. slaveinterface的名字
@@ -151,7 +170,7 @@ windows下子linux
          1. address_region:物理地址
          2. remap_region:  物理地址重映射,可以通过外部IO控制REMAP参数去控制硬件映射方式
    5. 定义device slave 的masterinterface的名字
-   6. 完成makefile文件,在readme里面有说明
+   6. 完成makefile文件,大体就是执行脚本文件指向你的配置文件,在readme里面有说明
    7. 获得代码
 4. 注意事项:
    1. 矩阵会在第一次仲裁时,会有一个延迟
@@ -185,13 +204,18 @@ windows下子linux
 
 #### g.cmsdk_ahb_master_mux
 
-1. 多个master合并,在M3的权威指南上有说明
-I-code 和 D-code 两个总线结构由master_mux合并,就不用去写矩阵了(现在矩阵也脚本化了,这个可能会比较少用)
+本质是把多个主机合成一个主机
+
+1. 多个master合并,在M3的权威指南上有说明,I-code 和 D-code 两个总线结构由master_mux合并,也可以节省matrix的面积
+2. ==问题:能不能用master_mux+slave_mux构成传统的mult AHB==
 
 #### h.cmsdk_ahb_slave_mux
 
-1. 麻烦点,传统的ahb,ahb_lite控制多从机的方式
-2. 相比矩阵不会有延迟了
+本质是把多个从机合成一个从机
+
+1. ahb_lite控制多从机的方式(应该)
+2. 还可以使用组合的方式,用matrix控制slave mux,可以有效降低matrix的面积
+3. 直接用传统的AHB2相比矩阵不会有延迟了
 
 ### iiii.软件开发
 
